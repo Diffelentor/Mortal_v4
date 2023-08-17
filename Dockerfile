@@ -1,24 +1,25 @@
 # syntax=docker/dockerfile:1.4-labs
 
-FROM archlinux:base-devel as libriichi_build
+FROM nvcr.io/nvidia/pytorch:23.07-py3 as libriichi_build
 
-RUN pacman -Syu --noconfirm
-RUN pacman -S --noconfirm --needed rust python
-RUN pacman -Scc
+RUN apt update -y
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+RUN apt install -y python3.10
 
 WORKDIR /
 COPY Cargo.toml Cargo.lock .
 COPY libriichi libriichi
 COPY exe-wrapper exe-wrapper
 
-RUN cargo build -p libriichi --lib --release
+RUN source $HOME/.cargo/env && cargo build -p libriichi --lib --release
 
 # -----
-FROM archlinux:base
+FROM nvcr.io/nvidia/pytorch:23.07-py3
 
-RUN pacman -Syu --noconfirm
-RUN pacman -S --noconfirm --needed python python-pytorch-cuda python-toml python-tqdm tensorboard
-RUN pacman -Scc
+RUN apt update -y
+RUN apt install -y python3.10
+RUN pip install torch
+RUN pip install toml tqdm tensorboard
 
 WORKDIR /mortal
 COPY mortal .
@@ -38,4 +39,4 @@ EOF
 
 VOLUME /mnt
 
-ENTRYPOINT ["python", "mortal.py"]
+ENTRYPOINT ["bash"]
