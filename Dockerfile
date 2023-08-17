@@ -2,24 +2,23 @@
 
 FROM archlinux:base-devel as libriichi_build
 
-RUN <<EOF
-pacman -Syu --noconfirm --needed rust python
-pacman -Scc
-EOF
+RUN pacman -Syu --noconfirm
+RUN pacman -S --noconfirm --needed rust python
+RUN pacman -Scc
 
 WORKDIR /
 COPY Cargo.toml Cargo.lock .
 COPY libriichi libriichi
+COPY exe-wrapper exe-wrapper
 
 RUN cargo build -p libriichi --lib --release
 
 # -----
 FROM archlinux:base
 
-RUN <<EOF
-pacman -Syu --noconfirm --needed python python-pytorch python-toml python-tqdm tensorboard
-pacman -Scc
-EOF
+RUN pacman -Syu --noconfirm
+RUN pacman -S --noconfirm --needed python python-pytorch-cuda python-toml python-tqdm tensorboard
+RUN pacman -Scc
 
 WORKDIR /mortal
 COPY mortal .
