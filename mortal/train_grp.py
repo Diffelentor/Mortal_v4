@@ -71,14 +71,15 @@ def collate(batch):
         lengths.append(len(inputs_seq))
         rank_by_players.append(rank_by_player)
 
-    lengths = torch.tensor(lengths)
-    rank_by_players = torch.tensor(rank_by_players, dtype=torch.int64, pin_memory=True)
+    # lengths = torch.tensor(lengths)
+    # rank_by_players = torch.tensor(rank_by_players, dtype=torch.int64, pin_memory=True)
 
-    padded = pad_sequence(inputs, batch_first=True)
-    packed_inputs = pack_padded_sequence(padded, lengths, batch_first=True, enforce_sorted=False)
-    packed_inputs.pin_memory()
+    # padded = pad_sequence(inputs, batch_first=True)
+    # packed_inputs = pack_padded_sequence(padded, lengths, batch_first=True, enforce_sorted=False)
+    # packed_inputs.pin_memory()
 
-    return packed_inputs, rank_by_players
+    # return packed_inputs, rank_by_players
+    return inputs, lengths, rank_by_players
 
 def train():
     cfg = config['grp']
@@ -169,11 +170,17 @@ def train():
     logging.info(f'total steps: {steps:,} est. {approx_percent:6.3f}%')
 
     pb = tqdm(total=save_every, desc='TRAIN')
-    for inputs, rank_by_players in train_data_loader:
-        inputs = inputs.to(dtype=torch.float64, device=device)
+    for inputs, lengths, rank_by_players in train_data_loader:
+        lengths = torch.tensor(lengths)
+        rank_by_players = torch.tensor(rank_by_players, dtype=torch.int64, pin_memory=True)
+
+        padded = pad_sequence(inputs, batch_first=True)
+        packed_inputs = pack_padded_sequence(padded, lengths, batch_first=True, enforce_sorted=False)
+        packed_inputs.pin_memory()
+        packed_inputs = packed_inputs.to(dtype=torch.float64, device=device)
         rank_by_players = rank_by_players.to(dtype=torch.int64, device=device)
 
-        logits = grp.forward_packed(inputs)
+        logits = grp.forward_packed(packed_inputs)
         labels = grp.get_label(rank_by_players)
         loss = F.cross_entropy(logits, labels)
 
@@ -194,13 +201,19 @@ def train():
             with torch.no_grad():
                 grp.eval()
                 pb = tqdm(total=val_steps, desc='VAL')
-                for idx, (inputs, rank_by_players) in enumerate(val_data_loader):
+                for idx, (inputs, lengths, rank_by_players) in enumerate(val_data_loader):
+                    lengths = torch.tensor(lengths)
+                    rank_by_players = torch.tensor(rank_by_players, dtype=torch.int64, pin_memory=True)
+
+                    padded = pad_sequence(inputs, batch_first=True)
+                    packed_inputs = pack_padded_sequence(padded, lengths, batch_first=True, enforce_sorted=False)
+                    packed_inputs.pin_memory()
                     if idx == val_steps:
                         break
-                    inputs = inputs.to(dtype=torch.float64, device=device)
+                    packed_inputs = packed_inputs.to(dtype=torch.float64, device=device)
                     rank_by_players = rank_by_players.to(dtype=torch.int64, device=device)
 
-                    logits = grp.forward_packed(inputs)
+                    logits = grp.forward_packed(packed_inputs)
                     labels = grp.get_label(rank_by_players)
                     loss = F.cross_entropy(logits, labels)
 
