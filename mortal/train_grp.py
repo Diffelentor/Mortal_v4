@@ -234,10 +234,14 @@ def train():
             writer.add_scalar('lr', lr, steps)
             writer.flush()
 
+            logging.info(f'total steps: {steps:,} est. {approx_percent:6.3f}%')
+            logging.info(f'train_loss: {stats["train_loss"] / save_every}')
+            logging.info(f'val_loss: {stats["val_loss"] / save_every}')
+            logging.info(f'train_acc: {stats["train_acc"] / save_every}')
+            logging.info(f'val_acc: {stats["val_acc"] / save_every}')
             for k in stats:
                 stats[k] = 0
             approx_percent = steps * batch_size / (len(train_file_list) * 10) * 100
-            logging.info(f'total steps: {steps:,} est. {approx_percent:6.3f}%')
 
             state = {
                 'model': grp.state_dict(),
