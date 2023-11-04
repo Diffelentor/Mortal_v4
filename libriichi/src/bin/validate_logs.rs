@@ -27,8 +27,7 @@ fn main() -> Result<()> {
         .with_style(ProgressStyle::with_template(TEMPLATE)?.tick_chars(".oO°Oo*"));
     bar.enable_steady_tick(Duration::from_millis(150));
 
-    glob(&format!("{dir}/**/*.json"))?
-        .chain(glob(&format!("{dir}/**/*.json.gz"))?)
+    glob(&format!("{dir}/**/*.json.gz"))?
         .par_bridge()
         .try_for_each(|path| {
             bar.inc(1);

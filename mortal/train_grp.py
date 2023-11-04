@@ -236,9 +236,9 @@ def train():
 
             logging.info(f'total steps: {steps:,} est. {approx_percent:6.3f}%')
             logging.info(f'train_loss: {stats["train_loss"] / save_every}')
-            logging.info(f'val_loss: {stats["val_loss"] / save_every}')
+            logging.info(f'val_loss: {stats["val_loss"] / val_steps}')
             logging.info(f'train_acc: {stats["train_acc"] / save_every}')
-            logging.info(f'val_acc: {stats["val_acc"] / save_every}')
+            logging.info(f'val_acc: {stats["val_acc"] / val_steps}')
             for k in stats:
                 stats[k] = 0
             approx_percent = steps * batch_size / (len(train_file_list) * 10) * 100
