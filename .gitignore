@@ -12,3 +12,11 @@ __pycache__
 *.ipynb
 
 /_draft
+
+/mortal/grp
+/mortal/__train_grp.py
+/mortal/config copy.toml
+/mortal/dataset.tar
+/mortal/top_player_new.txt
+/mortal/top_player.txt
+/Dockerfile_compile

@@ -12,15 +12,15 @@ from libriichi.arena import OneVsThree
 from config import config
 
 class TestPlayer:
-    def __init__(self):
+    def __init__(self, conv_channels=256, num_blocks=54):
         baseline_cfg = config['baseline']['test']
         device = torch.device(baseline_cfg['device'])
 
         state = torch.load(baseline_cfg['state_file'], map_location=torch.device('cpu'))
         cfg = state['config']
         version = cfg['control'].get('version', 1)
-        conv_channels = cfg['resnet']['conv_channels']
-        num_blocks = cfg['resnet']['num_blocks']
+        # conv_channels = cfg['resnet']['conv_channels']
+        # num_blocks = cfg['resnet']['num_blocks']
         stable_mortal = Brain(version=version, conv_channels=conv_channels, num_blocks=num_blocks).eval()
         stable_dqn = DQN(version=version).eval()
         stable_mortal.load_state_dict(state['mortal'])
