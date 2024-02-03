@@ -23,14 +23,10 @@ jobs:
       matrix:
         job:
           - { os: ubuntu-latest  , target: x86_64-unknown-linux-gnu       , use-cross: false , extension: ""   }
-          - { os: ubuntu-latest  , target: x86_64-unknown-linux-musl      , use-cross: true  , extension: ""   }
-          - { os: ubuntu-latest  , target: armv7-unknown-linux-gnueabihf  , use-cross: true  , extension: ""   }
-          - { os: ubuntu-latest  , target: armv7-unknown-linux-musleabihf , use-cross: true  , extension: ""   }
           - { os: ubuntu-latest  , target: aarch64-unknown-linux-gnu      , use-cross: true  , extension: ""   }
-          - { os: ubuntu-latest  , target: aarch64-unknown-linux-musl     , use-cross: true  , extension: ""   }
           - { os: macos-latest   , target: x86_64-apple-darwin            , use-cross: false , extension: ""   }
           - { os: macos-latest   , target: aarch64-apple-darwin           , use-cross: false , extension: ""   }
-          - { os: windows-latest , target: x86_64-pc-windows-msvc         , use-cross: false , extension: .exe }
+          - { os: windows-latest , target: x86_64-pc-windows-msvc         , use-cross: false , extension: ""   }
     steps:
       - uses: actions/checkout@v2
         with:
@@ -49,44 +45,6 @@ jobs:
           target: ${{ matrix.job.target }}
           override: true
           profile: minimal
-  
-      - name: Environment preparation
-        id: prep
-        run: |
-          set -x
-
-          rustup toolchain update --no-self-update stable
-          rustup default stable
-          rustup component add clippy rustfmt
-          rustup show
-
-          rustc --version | awk '{print $2}' | tee RUSTC_VER
-          echo "rustc_ver=$(cat RUSTC_VER)" >> $GITHUB_OUTPUT
-
-      - name: Cache for Rust
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin
-            ~/.cargo/registry/index
-            ~/.cargo/registry/cache
-            ~/.cargo/git/db
-            target
-          key: ${{ github.workflow }}|${{ runner.os }}|cargo|00|${{ steps.prep.outputs.rustc_ver }}|${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ github.workflow }}|${{ runner.os }}|cargo|00|${{ steps.prep.outputs.rustc_ver }}|
-
-      # - name: Run rustfmt
-      #   run: cargo fmt --all --check
-
-      # - name: Run clippy
-      #   run: cargo clippy --workspace --all-targets --all-features -- -Dwarnings
-
-      # - name: Run tests
-      #   run: |
-      #     cargo test --workspace --no-default-features --features flate2/zlib -- --nocapture
-      #     cargo test --workspace --no-default-features --features flate2/zlib,sp_reproduce_cpp_ver -- --nocapture
-      #     cargo test -p libriichi --no-default-features --benches
 
       - name: Build
         uses: actions-rs/cargo@v1
@@ -94,6 +52,20 @@ jobs:
           use-cross: ${{ matrix.job.use-cross }}
           command: build
           args: --release -p libriichi --lib --target ${{ matrix.job.target }}
+
+      - name: Generate release tag
+        id: tag
+        run: |
+          echo "::set-output name=release_tag::UserBuild_$(date +"%Y.%m.%d_%H-%M")"
+      - name: Release user firmware
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.tag.outputs.release_tag }}
+          files: |
+            file1
+            file2
 
       - name: Release
         uses: softprops/action-gh-release@v1
