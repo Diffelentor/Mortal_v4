@@ -132,7 +132,7 @@ static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 /// - Self-play under standard Tenhou rules (via `arena`).
 /// - Definitions of observation and action space for Mortal (via `consts`).
 /// - Statistical works on mjai logs (via `stat.Stat`).
-/// - mjai interface (via `mjai.Bot`).
+/// - mjai interface (via `mjai.Bot`). 
 #[pymodule]
 fn libriichi(py: Python<'_>, m: &PyModule) -> PyResult<()> {
     pyo3_log::init();
