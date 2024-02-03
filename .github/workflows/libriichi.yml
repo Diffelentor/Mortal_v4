@@ -25,11 +25,11 @@ jobs:
       fail-fast: false
       matrix:
         job:
-          - { os: ubuntu-latest  , target: x86_64-unknown-linux-gnu       , use-cross: false , extension: .so    }
-          - { os: ubuntu-latest  , target: aarch64-unknown-linux-gnu      , use-cross: true  , extension: .so    }
-          - { os: macos-latest   , target: x86_64-apple-darwin            , use-cross: false , extension: .dylib }
-          - { os: macos-latest   , target: aarch64-apple-darwin           , use-cross: false , extension: .dylib }
-          - { os: windows-latest , target: x86_64-pc-windows-msvc         , use-cross: false , extension: .dll   }
+          - { os: ubuntu-latest  , target: x86_64-unknown-linux-gnu       , use-cross: false , extension: .so    , to-extension: .so  }
+          # - { os: ubuntu-latest  , target: aarch64-unknown-linux-gnu      , use-cross: true  , extension: .so    , to-extension: .so  }
+          - { os: macos-latest   , target: x86_64-apple-darwin            , use-cross: false , extension: .dylib , to-extension: .so  }
+          - { os: macos-latest   , target: aarch64-apple-darwin           , use-cross: false , extension: .dylib , to-extension: .so  }
+          - { os: windows-latest , target: x86_64-pc-windows-msvc         , use-cross: false , extension: .dll   , to-extension: .pyd }
     steps:
       - uses: actions/checkout@v2
         with:
@@ -56,10 +56,15 @@ jobs:
           command: build
           args: --release -p libriichi --lib --target ${{ matrix.job.target }}
 
+      - name: Rename artifacts
+        shell: bash
+        run: |
+          mv target/${{ matrix.job.target }}/release/*${{ matrix.job.extension }} target/${{ matrix.job.target }}/release/libriichi-${{ matrix.job.target }}${{ matrix.job.to-extension }}
+
       - name: Generate release tag
         id: tag
         run: |
-          echo "::set-output name=release_tag::UserBuild_$(date +"%Y.%m.%d_%H-%M")"
+          echo "::set-output name=release_tag::UserBuild_$(date +"%Y.%m.%d")"
       - name: Release user firmware
         uses: softprops/action-gh-release@v1
         env:
@@ -67,5 +72,5 @@ jobs:
         with:
           tag_name: ${{ steps.tag.outputs.release_tag }}
           files: |
-            target/${{ matrix.job.target }}/release/*${{ matrix.job.extension }}
+            target/${{ matrix.job.target }}/release/libriichi-${{ matrix.job.target }}${{ matrix.job.to-extension }}
 
