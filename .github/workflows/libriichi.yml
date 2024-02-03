@@ -64,7 +64,7 @@ jobs:
       - name: Generate release tag
         id: tag
         run: |
-          echo "release_tag=UserBuild_$(date +"%Y.%m.%d")" >> $GITHUB_OUTPUT
+          echo "::set-output name=release_tag::UserBuild_$(date +"%Y.%m.%d")"
       - name: Release user firmware
         uses: softprops/action-gh-release@v1
         env:
