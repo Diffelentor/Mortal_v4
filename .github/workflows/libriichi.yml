@@ -22,7 +22,6 @@ jobs:
           - { os: windows-latest , target: x86_64-pc-windows-msvc         , use-cross: false , extension: .dll   , to-extension: .pyd }
     steps:
       - uses: actions/checkout@v2
-        with:
       - uses: actions/setup-python@v4
         id: setup-python
         with:
