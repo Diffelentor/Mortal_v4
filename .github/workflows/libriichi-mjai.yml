@@ -1,0 +1,72 @@
+name: build-libriichi-mjai
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/libriichi-mjai.yml
+      - Cargo*
+      - libriichi/**
+      - exe-wrapper/**
+
+jobs:
+  build:
+    runs-on: ${{ matrix.job.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10"]
+        job:
+          - { os: ubuntu-latest  , target: x86_64-unknown-linux-gnu       , use-cross: true  , extension: .so    , to-extension: .so  }
+          #- { os: ubuntu-latest  , target: x86_64-unknown-linux-musl      , use-cross: false , extension: .so    , to-extension: .so  }
+          #- { os: macos-latest   , target: x86_64-apple-darwin            , use-cross: false , extension: .dylib , to-extension: .so  }
+          #- { os: macos-latest   , target: aarch64-apple-darwin           , use-cross: false , extension: .dylib , to-extension: .so  }
+          #- { os: windows-latest , target: x86_64-pc-windows-msvc         , use-cross: false , extension: .dll   , to-extension: .pyd }
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v4
+        id: setup-python
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.job.target }}
+          override: true
+          profile: minimal
+          
+      - uses: mlugg/setup-zig@v1
+        with:
+          version: 0.13.0
+          
+      - name: Install cargo-zigbuild
+        run: cargo install --locked cargo-zigbuild
+
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: ${{ matrix.job.use-cross }}
+          command: zigbuild
+          args: --release -p libriichi --lib --target ${{ matrix.job.target }}.2.35
+
+      - name: Rename artifacts
+        shell: bash
+        run: |
+          mv target/${{ matrix.job.target }}/release/*${{ matrix.job.extension }} target/${{ matrix.job.target }}/release/libriichi-${{ matrix.python-version }}-${{ matrix.job.target }}-mjai${{ matrix.job.to-extension }}
+      - name: Generate release tag
+        id: tag
+        run: |
+          echo "::set-output name=release_tag::libriichi_$(date +"%Y.%m.%d")"
+      - name: Release user firmware
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.tag.outputs.release_tag }}
+          files: |
+            target/${{ matrix.job.target }}/release/libriichi-${{ matrix.python-version }}-${{ matrix.job.target }}-mjai${{ matrix.job.to-extension }}
