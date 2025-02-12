@@ -6,6 +6,11 @@ permissions:
 on:
   push:
     branches: [main]
+    paths:
+      - .github/workflows/libriichi.yml
+      - Cargo*
+      - libriichi/**
+      - exe-wrapper/**
 
 jobs:
   build:
