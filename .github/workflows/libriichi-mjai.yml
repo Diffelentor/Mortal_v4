@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10"]
+        python-version: ["3.10", "3.12"]
         job:
           - { os: ubuntu-latest  , target: x86_64-unknown-linux-gnu       , use-cross: true  , extension: .so    , to-extension: .so  }
           #- { os: ubuntu-latest  , target: x86_64-unknown-linux-musl      , use-cross: false , extension: .so    , to-extension: .so  }
